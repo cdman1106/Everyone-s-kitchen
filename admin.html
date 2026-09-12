@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>店舗管理｜Everyone’s kitchen</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body class="admin-page">
+<main class="admin-shell">
+  <div class="admin-top">
+    <h1>Everyone’s kitchen 店舗管理</h1>
+    <a class="admin-back" href="index.html">サイトを見る →</a>
+  </div>
+
+  <section class="admin-panel">
+    <h2>管理パスワード</h2>
+    <p class="admin-help">Cloudflareに設定した管理パスワードを入力してください。パスワードはこのHTMLには保存されません。</p>
+    <div class="admin-login-line">
+      <label class="admin-field" style="margin:0"><span>パスワード</span><input id="adminPassword" type="password" autocomplete="current-password" placeholder="管理パスワード"></label>
+      <button class="btn" id="reloadBtn" type="button">最新情報を読み込む</button>
+    </div>
+  </section>
+
+  <section class="admin-panel">
+    <h2>お知らせ</h2>
+    <label class="admin-switch"><input id="noticeEnabled" type="checkbox"> ホームページに表示する</label>
+    <label class="admin-field"><span>お知らせ内容</span><textarea id="noticeText" maxlength="180" placeholder="例：本日は18:00から夜営業です。"></textarea></label>
+  </section>
+
+  <section class="admin-panel">
+    <h2>本日の日替わり</h2>
+    <label class="admin-switch"><input id="dailyEnabled" type="checkbox"> ホームページに表示する</label>
+    <label class="admin-switch"><input id="dailySoldOut" type="checkbox"> 売り切れにする</label>
+    <div class="admin-row">
+      <label class="admin-field"><span>商品名</span><input id="dailyName" type="text" maxlength="60" placeholder="例：日替わり弁当"></label>
+      <label class="admin-field"><span>価格</span><input id="dailyPrice" type="text" maxlength="30" placeholder="例：650円（税込）"></label>
+    </div>
+    <label class="admin-field"><span>説明</span><textarea id="dailyDescription" maxlength="180" placeholder="例：本日はチキン南蛮とだし巻き玉子。"></textarea></label>
+    <label class="admin-field"><span>写真</span><input id="dailyImageInput" type="file" accept="image/*"></label>
+    <img id="dailyPreview" class="admin-preview" alt="日替わり画像プレビュー" hidden>
+    <div class="admin-image-actions"><button class="admin-small-btn admin-danger" id="dailyImageDelete" type="button">写真を削除</button></div>
+  </section>
+
+  <section class="admin-panel">
+    <h2>本日のおすすめ</h2>
+    <p class="admin-help">最大5品。表示したい商品だけ「表示する」をONにしてください。</p>
+    <div id="specialEditors"></div>
+  </section>
+
+  <div class="admin-note">「保存して公開」を押すとサイト側に反映されます。Cloudflare KVの特性上、場所によって反映まで少し時間がかかる場合があります。</div>
+  <div class="admin-actions"><button class="btn" id="saveBtn" type="button">保存して公開</button></div>
+  <div id="adminStatus" class="admin-status" role="status" aria-live="polite"></div>
+</main>
+
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const slots = 5;
+  let state = {notice:{enabled:false,text:''},dailyLunch:{enabled:false,soldOut:false,name:'',price:'',description:'',image:''},specials:[]};
+
+  function emptySpecial(){ return {enabled:false,soldOut:false,name:'',price:'',description:'',image:''}; }
+  function normalize(data){
+    const x = data && typeof data === 'object' ? data : {};
+    return {
+      notice: Object.assign({enabled:false,text:''}, x.notice || {}),
+      dailyLunch: Object.assign({enabled:false,soldOut:false,name:'',price:'',description:'',image:''}, x.dailyLunch || {}),
+      specials: Array.from({length:slots}, (_,i) => Object.assign(emptySpecial(), Array.isArray(x.specials) ? (x.specials[i] || {}) : {}))
+    };
+  }
+
+  function editorHtml(i){
+    const n=i+1;
+    return `<div class="admin-item" data-special="${i}">
+      <div class="admin-item-title"><strong>おすすめ ${n}</strong></div>
+      <div class="admin-row">
+        <label class="admin-switch"><input id="spEnabled${i}" type="checkbox"> 表示する</label>
+        <label class="admin-switch"><input id="spSoldOut${i}" type="checkbox"> 売り切れ</label>
+      </div>
+      <div class="admin-row">
+        <label class="admin-field"><span>商品名</span><input id="spName${i}" type="text" maxlength="60" placeholder="例：本マグロ赤身"></label>
+        <label class="admin-field"><span>価格</span><input id="spPrice${i}" type="text" maxlength="30" placeholder="例：450円〜"></label>
+      </div>
+      <label class="admin-field"><span>ひとこと</span><textarea id="spDescription${i}" maxlength="180" placeholder="例：本日入荷。数量限定です。"></textarea></label>
+      <label class="admin-field"><span>写真</span><input id="spImageInput${i}" type="file" accept="image/*"></label>
+      <img id="spPreview${i}" class="admin-preview" alt="おすすめ画像プレビュー" hidden>
+      <div class="admin-image-actions"><button class="admin-small-btn admin-danger" type="button" data-delete-image="${i}">写真を削除</button></div>
+    </div>`;
+  }
+
+  $('specialEditors').innerHTML = Array.from({length:slots}, (_,i)=>editorHtml(i)).join('');
+
+  function setStatus(msg, ok=true){
+    const el=$('adminStatus'); el.textContent=msg; el.className='admin-status '+(ok?'ok':'err');
+  }
+
+  function fill(data){
+    state=normalize(data);
+    $('noticeEnabled').checked=!!state.notice.enabled; $('noticeText').value=state.notice.text||'';
+    const d=state.dailyLunch;
+    $('dailyEnabled').checked=!!d.enabled; $('dailySoldOut').checked=!!d.soldOut; $('dailyName').value=d.name||''; $('dailyPrice').value=d.price||''; $('dailyDescription').value=d.description||'';
+    setPreview('dailyPreview',d.image);
+    state.specials.forEach((s,i)=>{
+      $('spEnabled'+i).checked=!!s.enabled; $('spSoldOut'+i).checked=!!s.soldOut; $('spName'+i).value=s.name||''; $('spPrice'+i).value=s.price||''; $('spDescription'+i).value=s.description||''; setPreview('spPreview'+i,s.image);
+    });
+  }
+
+  function setPreview(id, src){ const el=$(id); if(src && /^data:image\//.test(src)){el.src=src;el.hidden=false}else{el.removeAttribute('src');el.hidden=true} }
+
+  async function compressImage(file){
+    if(!file) return '';
+    if(!file.type.startsWith('image/')) throw new Error('画像ファイルを選択してください。');
+    const bitmap=await createImageBitmap(file);
+    let max=1000, quality=.76, data='';
+    for(let attempt=0;attempt<4;attempt++){
+      const scale=Math.min(1,max/Math.max(bitmap.width,bitmap.height));
+      const w=Math.max(1,Math.round(bitmap.width*scale)), h=Math.max(1,Math.round(bitmap.height*scale));
+      const canvas=document.createElement('canvas'); canvas.width=w; canvas.height=h;
+      canvas.getContext('2d').drawImage(bitmap,0,0,w,h);
+      data=canvas.toDataURL('image/jpeg',quality);
+      if(data.length<650000) break;
+      max=Math.round(max*.82); quality=Math.max(.56,quality-.07);
+    }
+    bitmap.close();
+    if(data.length>900000) throw new Error('画像が大きすぎます。別の写真を選択してください。');
+    return data;
+  }
+
+  async function applyFile(inputId, previewId, target, key){
+    const file=$(inputId).files[0]; if(!file) return;
+    setStatus('画像を最適化しています…');
+    try{ const data=await compressImage(file); target[key]=data; setPreview(previewId,data); setStatus('画像をセットしました。最後に「保存して公開」を押してください。'); }
+    catch(e){ setStatus(e.message,false); }
+  }
+
+  $('dailyImageInput').addEventListener('change',()=>applyFile('dailyImageInput','dailyPreview',state.dailyLunch,'image'));
+  $('dailyImageDelete').addEventListener('click',()=>{state.dailyLunch.image='';setPreview('dailyPreview','');$('dailyImageInput').value='';});
+  for(let i=0;i<slots;i++) $('spImageInput'+i).addEventListener('change',()=>applyFile('spImageInput'+i,'spPreview'+i,state.specials[i],'image'));
+  document.querySelectorAll('[data-delete-image]').forEach(b=>b.addEventListener('click',()=>{const i=Number(b.dataset.deleteImage);state.specials[i].image='';setPreview('spPreview'+i,'');$('spImageInput'+i).value='';}));
+
+  function collect(){
+    const out=normalize(state);
+    out.notice={enabled:$('noticeEnabled').checked,text:$('noticeText').value.trim()};
+    out.dailyLunch={enabled:$('dailyEnabled').checked,soldOut:$('dailySoldOut').checked,name:$('dailyName').value.trim(),price:$('dailyPrice').value.trim(),description:$('dailyDescription').value.trim(),image:state.dailyLunch.image||''};
+    out.specials=Array.from({length:slots},(_,i)=>({enabled:$('spEnabled'+i).checked,soldOut:$('spSoldOut'+i).checked,name:$('spName'+i).value.trim(),price:$('spPrice'+i).value.trim(),description:$('spDescription'+i).value.trim(),image:state.specials[i].image||''}));
+    return out;
+  }
+
+  async function load(){
+    setStatus('読み込み中…');
+    try{ const r=await fetch('/api/content',{cache:'no-store'}); const j=await r.json(); if(!r.ok) throw new Error(j.error||'読み込みに失敗しました。'); fill(j); setStatus('最新情報を読み込みました。'); }
+    catch(e){ setStatus('APIに接続できません。Cloudflareの設定を確認してください。',false); }
+  }
+
+  async function save(){
+    const pass=$('adminPassword').value;
+    if(!pass){setStatus('管理パスワードを入力してください。',false);return;}
+    const payload=collect();
+    setStatus('保存中…'); $('saveBtn').disabled=true;
+    try{
+      const r=await fetch('/api/content',{method:'POST',headers:{'Content-Type':'application/json','X-Admin-Password':pass},body:JSON.stringify(payload)});
+      const j=await r.json(); if(!r.ok) throw new Error(j.error||'保存に失敗しました。');
+      fill(j.content); sessionStorage.setItem('ekAdminPassword',pass); setStatus('保存しました。ホームページに公開されています。');
+    }catch(e){setStatus(e.message||'保存に失敗しました。',false)}finally{$('saveBtn').disabled=false;}
+  }
+
+  $('reloadBtn').addEventListener('click',load); $('saveBtn').addEventListener('click',save);
+  $('adminPassword').value=sessionStorage.getItem('ekAdminPassword')||'';
+  load();
+})();
+</script>
+</body>
+</html>
