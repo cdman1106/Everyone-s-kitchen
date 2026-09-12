@@ -63,10 +63,10 @@ async function sameSecret(a, b) {
 }
 
 async function handleApi(request, env) {
-  if (!env.SITE_CONTENT) return json({ error: 'SITE_CONTENT が未設定です。Cloudflare KV binding を確認してください。' }, 500);
+  if (!env.SITE_CONTENT_V2) return json({ error: 'SITE_CONTENT_V2 が未設定です。Cloudflare KV binding を確認してください。' }, 500);
 
   if (request.method === 'GET') {
-    const stored = await env.SITE_CONTENT.get(KEY, 'json');
+    const stored = await env.SITE_CONTENT_V2.get(KEY, 'json');
     return json(stored || DEFAULT_CONTENT);
   }
 
@@ -87,7 +87,7 @@ async function handleApi(request, env) {
     const cleaned = cleanContent(body);
     const encoded = JSON.stringify(cleaned);
     if (encoded.length > 6000000) return json({ error: '画像を含むデータ容量が大きすぎます。' }, 413);
-    await env.SITE_CONTENT.put(KEY, encoded);
+    await env.SITE_CONTENT_V2.put(KEY, encoded);
     return json({ ok: true, content: cleaned });
   }
 
