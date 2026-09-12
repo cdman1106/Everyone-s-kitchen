@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
 <title>店舗管理｜Everyone’s kitchen</title>
-<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="style.css?v=20260912b">
 </head>
 <body class="admin-page">
 <main class="admin-shell">
@@ -45,7 +45,7 @@
 
   <section class="admin-panel">
     <h2>本日のおすすめ</h2>
-    <p class="admin-help">最大5品。表示したい商品だけ「表示する」をONにしてください。</p>
+    <p class="admin-help">最大5品。商品名や価格を入力すると「表示する」が自動でONになります。非公開にしたい時だけOFFにしてください。</p>
     <div id="specialEditors"></div>
   </section>
 
@@ -91,6 +91,14 @@
 
   $('specialEditors').innerHTML = Array.from({length:slots}, (_,i)=>editorHtml(i)).join('');
 
+  function autoPublish(){
+    ['dailyName','dailyPrice','dailyDescription'].forEach(id=>$(id).addEventListener('input',()=>{ if($(id).value.trim()) $('dailyEnabled').checked=true; }));
+    for(let i=0;i<slots;i++){
+      ['spName'+i,'spPrice'+i,'spDescription'+i].forEach(id=>$(id).addEventListener('input',()=>{ if($(id).value.trim()) $('spEnabled'+i).checked=true; }));
+    }
+  }
+  autoPublish();
+
   function setStatus(msg, ok=true){
     const el=$('adminStatus'); el.textContent=msg; el.className='admin-status '+(ok?'ok':'err');
   }
@@ -130,7 +138,7 @@
   async function applyFile(inputId, previewId, target, key){
     const file=$(inputId).files[0]; if(!file) return;
     setStatus('画像を最適化しています…');
-    try{ const data=await compressImage(file); target[key]=data; setPreview(previewId,data); setStatus('画像をセットしました。最後に「保存して公開」を押してください。'); }
+    try{ const data=await compressImage(file); target[key]=data; setPreview(previewId,data); if(inputId==='dailyImageInput') $('dailyEnabled').checked=true; else { const m=inputId.match(/(\d+)$/); if(m) $('spEnabled'+m[1]).checked=true; } setStatus('画像をセットしました。最後に「保存して公開」を押してください。'); }
     catch(e){ setStatus(e.message,false); }
   }
 
@@ -149,7 +157,7 @@
 
   async function load(){
     setStatus('読み込み中…');
-    try{ const r=await fetch('/api/content',{cache:'no-store'}); const j=await r.json(); if(!r.ok) throw new Error(j.error||'読み込みに失敗しました。'); fill(j); setStatus('最新情報を読み込みました。'); }
+    try{ const r=await fetch('/api/content?t='+Date.now(),{cache:'no-store',headers:{'cache-control':'no-cache'}}); const j=await r.json(); if(!r.ok) throw new Error(j.error||'読み込みに失敗しました。'); fill(j); setStatus('最新情報を読み込みました。'); }
     catch(e){ setStatus('APIに接続できません。Cloudflareの設定を確認してください。',false); }
   }
 

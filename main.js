@@ -66,8 +66,12 @@
     const daily = data.dailyLunch || {};
     const specials = Array.isArray(data.specials) ? data.specials.filter(x => x && x.enabled) : [];
     const today = $('todaySection');
-    if (!today || (!daily.enabled && specials.length === 0)) return;
+    if (!today) return;
     today.hidden = false;
+    const hasDaily = !!daily.enabled;
+    const hasAny = hasDaily || specials.length > 0;
+    const empty = $('todayEmpty');
+    if (empty) empty.hidden = hasAny;
 
     if (data.updatedAt && $('todayUpdated')) {
       try {
@@ -76,6 +80,7 @@
       } catch (_) {}
     }
 
+    if ($('dailyLunchCard')) $('dailyLunchCard').hidden = true;
     if (daily.enabled && $('dailyLunchCard')) {
       const card = $('dailyLunchCard');
       card.hidden = false;
@@ -101,7 +106,7 @@
   }
 
   if ($('todaySection') || $('todayNotice')) {
-    fetch('/api/content', {cache:'no-store'})
+    fetch('/api/content?t=' + Date.now(), {cache:'no-store', headers:{'cache-control':'no-cache'}})
       .then(r => r.ok ? r.json() : Promise.reject(new Error('content api unavailable')))
       .then(renderOwnerContent)
       .catch(() => { /* API未設定時は通常サイトとして表示 */ });
