@@ -76,3 +76,350 @@ html,body{max-width:100%;overflow-x:hidden}.header-inner{position:relative}.hero
   .external-card{padding:20px}
   .external-card strong{font-size:1.2rem}
 }
+
+
+/* =========================================================
+   Desktop polish v20260913d
+   PCでは余白・横幅・画像比率・ナビを整え、
+   スマホ/タブレットの既存レスポンシブは維持。
+   ========================================================= */
+
+@media (min-width: 1221px){
+  .wrap{
+    width:min(1240px, calc(100% - 80px));
+  }
+
+  .header-inner{
+    min-height:76px;
+    gap:22px;
+  }
+
+  .brand{
+    font-size:1.12rem;
+    flex:0 0 auto;
+  }
+
+  .brand-mark{
+    width:32px;
+    height:32px;
+  }
+
+  .nav{
+    display:flex!important;
+    gap:15px;
+    font-size:.80rem;
+    white-space:nowrap;
+  }
+
+  .nav a{
+    flex:0 0 auto;
+  }
+
+  .cta-mini{
+    padding:10px 14px;
+  }
+
+  .menu-btn{
+    display:none!important;
+  }
+
+  .hero-grid{
+    width:100%;
+    max-width:1600px;
+    min-height:620px;
+    grid-template-columns:minmax(440px,.88fr) minmax(0,1.12fr);
+  }
+
+  .hero-copy{
+    padding-top:86px;
+    padding-bottom:76px;
+    padding-left:max(40px,calc((100vw - 1240px)/2));
+    padding-right:54px;
+  }
+
+  .hero h1{
+    font-size:clamp(4rem,4.9vw,5.4rem);
+    line-height:1.08;
+    margin-bottom:22px;
+  }
+
+  .hero p{
+    max-width:560px;
+    font-size:1rem;
+    line-height:1.9;
+  }
+
+  .hero-image{
+    min-height:620px;
+  }
+
+  .hero-image img{
+    object-position:center center;
+  }
+
+  .section{
+    padding:96px 0;
+  }
+
+  .title{
+    font-size:clamp(2.6rem,3.3vw,3.75rem);
+    line-height:1.18;
+  }
+
+  .lead{
+    font-size:1.02rem;
+    line-height:2;
+  }
+
+  .split,
+  .menu-feature,
+  .offer{
+    grid-template-columns:minmax(0,.92fr) minmax(0,1.08fr);
+    gap:72px;
+  }
+
+  .section-dark .menu-feature:nth-child(1){
+    grid-template-columns:minmax(0,1.08fr) minmax(0,.92fr);
+  }
+
+  .photo-card,
+  .menu-poster,
+  .offer-image,
+  .daily-card,
+  .special-card,
+  .map-card,
+  .external-card,
+  .card{
+    border-radius:4px;
+  }
+
+  .photo-card img,
+  .offer-image img{
+    height:auto;
+    aspect-ratio:4/3;
+    object-fit:cover;
+  }
+
+  .menu-poster{
+    min-height:520px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:24px;
+    background:#eee9df;
+  }
+
+  .menu-poster img{
+    width:auto;
+    max-width:100%;
+    max-height:620px;
+    object-fit:contain;
+  }
+
+  .dual{
+    gap:20px;
+  }
+
+  .dual-card{
+    min-height:430px;
+  }
+
+  .dual-card h3{
+    font-size:2.7rem;
+  }
+
+  .gallery{
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:14px;
+  }
+
+  .gallery figure,
+  .placeholder{
+    min-height:0;
+    aspect-ratio:4/3;
+  }
+
+  .gallery figure img{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+  }
+
+  .page-hero{
+    padding:88px 0 72px;
+  }
+
+  .page-hero h1{
+    max-width:900px;
+    font-size:clamp(3.7rem,4.8vw,5.25rem);
+  }
+
+  .content-grid,
+  .poster-grid{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:30px;
+  }
+
+  .card{
+    padding:32px;
+  }
+
+  .today-heading{
+    align-items:flex-end;
+    margin-bottom:30px;
+  }
+
+  .today-layout{
+    grid-template-columns:minmax(300px,.8fr) minmax(0,1.7fr);
+    gap:26px;
+  }
+
+  .special-grid{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:18px;
+  }
+
+  .access-social-grid{
+    grid-template-columns:minmax(0,1.45fr) minmax(320px,.55fr);
+    gap:30px;
+  }
+
+  .map-embed{
+    height:460px;
+  }
+
+  .map-card-wide .map-embed{
+    height:560px;
+  }
+
+  .map-card-body{
+    padding:24px 26px 28px;
+  }
+
+  .official-links{
+    gap:18px;
+  }
+
+  .external-card{
+    padding:30px;
+  }
+
+  .footer{
+    padding-top:66px;
+  }
+
+  .footer-grid{
+    grid-template-columns:1.2fr .95fr .85fr;
+    gap:60px;
+  }
+
+  .cta-inner{
+    min-height:104px;
+  }
+}
+
+/* 11〜12インチ級・小さめPCではナビを無理に詰めずメニュー化 */
+@media (max-width:1220px){
+  .header-inner{
+    min-height:64px;
+  }
+
+  .menu-btn{
+    display:block!important;
+  }
+
+  .nav{
+    position:absolute;
+    display:none!important;
+    left:0;
+    right:0;
+    top:64px;
+    margin-left:0;
+    background:#111311;
+    padding:18px 22px 26px;
+    flex-direction:column;
+    align-items:stretch;
+    gap:0;
+    border-top:1px solid rgba(255,255,255,.08);
+    box-shadow:0 16px 30px rgba(0,0,0,.25);
+    max-height:calc(100vh - 64px);
+    overflow-y:auto;
+  }
+
+  .nav.open{
+    display:flex!important;
+  }
+
+  .nav a{
+    padding:12px 4px;
+    border-bottom:1px solid rgba(255,255,255,.08);
+  }
+
+  .nav a:not(.cta-mini):after{
+    display:none;
+  }
+
+  .cta-mini{
+    margin-top:12px;
+    text-align:center;
+  }
+}
+
+/* 一般的なPC幅でも本文が横に伸びすぎない */
+@media (min-width: 901px) and (max-width: 1220px){
+  .wrap{
+    width:min(1040px, calc(100% - 56px));
+  }
+
+  .hero-grid{
+    grid-template-columns:minmax(380px,.9fr) minmax(0,1.1fr);
+    min-height:560px;
+  }
+
+  .hero-copy{
+    padding:72px 42px;
+  }
+
+  .hero h1{
+    font-size:clamp(3.5rem,5.5vw,4.6rem);
+  }
+
+  .hero-image{
+    min-height:560px;
+    order:initial;
+  }
+
+  .split,
+  .menu-feature,
+  .offer{
+    grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+    gap:44px;
+  }
+
+  .gallery{
+    grid-template-columns:repeat(3,minmax(0,1fr));
+  }
+
+  .footer-grid{
+    grid-template-columns:1.15fr 1fr .85fr;
+    gap:34px;
+  }
+}
+
+/* PCで長い英字やURLがレイアウトを押し広げない */
+@media (min-width:901px){
+  .brand,
+  .nav,
+  .hero-copy,
+  .map-card-body,
+  .external-card,
+  .footer-grid > *{
+    min-width:0;
+  }
+
+  .external-card strong,
+  .external-card p,
+  .map-card-body p{
+    overflow-wrap:anywhere;
+  }
+}
